@@ -406,3 +406,13 @@ void kocrMainWindow::on_actionAbout_Kocr_triggered()
 {
     QMessageBox::about(this,"About Kocr", "Kocr is a graphical interface for Tesseract with support for HTML and searchable PDF output. \nKocr has been created by Luca Tringali.");
 }
+
+void kocrMainWindow::on_delimage_clicked()
+{
+    if (ui->listWidget->selectedItems().count()>0) {
+        foreach(QListWidgetItem * item, ui->listWidget->selectedItems())
+        {
+            delete ui->listWidget->takeItem(ui->listWidget->row(item));
+        }
+    }
+}

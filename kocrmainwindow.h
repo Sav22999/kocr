@@ -56,6 +56,8 @@ private slots:
 
     void on_actionAbout_Kocr_triggered();
 
+    void on_delimage_clicked();
+
 private:
     Ui::kocrMainWindow *ui;
     void addimagetolist(QString file);
