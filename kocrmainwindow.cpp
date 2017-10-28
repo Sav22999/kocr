@@ -6,55 +6,9 @@ kocrMainWindow::kocrMainWindow(QWidget *parent) :
     ui(new Ui::kocrMainWindow)
 {
     ui->setupUi(this);
+    startdirectory = QDir::currentPath();
 
-    if (osName() == "linux" || osName() == "unix") {
-        QString tesseract = "/usr/bin/tesseract";
-        if (QFileInfo(tesseract).exists()) {
-            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
-        }
-
-        QString cuneiform = "/usr/bin/cuneiform";
-        if (QFileInfo(cuneiform).exists()) {
-            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
-        }
-
-        if (QFileInfo("/usr/bin/gs").exists()) {
-            gs = "/usr/bin/gs";
-        }
-
-        if (QFileInfo("/usr/bin/convert").exists()) {
-            imconvert = "/usr/bin/convert";
-        }
-
-        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
-    }
-
-    if (osName() == "windows" || osName() == "wince") {
-        QString tesseract = QCoreApplication::applicationDirPath() + "/tesseract/tesseract.exe";
-        if (QFileInfo(tesseract).exists()) {
-            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
-        } else {
-            tesseract = "C:/Programs/tesseract/tesseract.exe";
-            if (QFileInfo(tesseract).exists()) {
-                ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
-            }
-        }
-
-        QString cuneiform = QCoreApplication::applicationDirPath() + "/cuneiform/cuneiform.exe";
-        if (QFileInfo(cuneiform).exists()) {
-            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
-        }
-
-        if (QFileInfo(QCoreApplication::applicationDirPath() + "/gs/gs.exe").exists()) {
-            gs = QCoreApplication::applicationDirPath() + "/gs/gs.exe";
-        }
-
-        if (QFileInfo(QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe").exists()) {
-            imconvert = QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe";
-        }
-
-        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
-    }
+    findocr();
 
     ui->plaintext->setChecked(true);
     dpi = "300";
@@ -91,9 +45,61 @@ QString kocrMainWindow::osName()
 #endif
 }
 
+void kocrMainWindow::findocr()
+{
+    if (osName() == "linux" || osName() == "unix") {
+        tesseract = "/usr/bin/tesseract";
+        if (QFileInfo(tesseract).exists()) {
+            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+        }
+
+        cuneiform = "/usr/bin/cuneiform";
+        if (QFileInfo(cuneiform).exists()) {
+            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
+        }
+
+        if (QFileInfo("/usr/bin/gs").exists()) {
+            gs = "/usr/bin/gs";
+        }
+
+        if (QFileInfo("/usr/bin/convert").exists()) {
+            imconvert = "/usr/bin/convert";
+        }
+
+        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
+    }
+
+    if (osName() == "windows" || osName() == "wince") {
+        tesseract = QCoreApplication::applicationDirPath() + "/tesseract/tesseract.exe";
+        if (QFileInfo(tesseract).exists()) {
+            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+        } else {
+            tesseract = "C:/Programs/tesseract/tesseract.exe";
+            if (QFileInfo(tesseract).exists()) {
+                ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+            }
+        }
+
+        cuneiform = QCoreApplication::applicationDirPath() + "/cuneiform/cuneiform.exe";
+        if (QFileInfo(cuneiform).exists()) {
+            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
+        }
+
+        if (QFileInfo(QCoreApplication::applicationDirPath() + "/gs/gs.exe").exists()) {
+            gs = QCoreApplication::applicationDirPath() + "/gs/gs.exe";
+        }
+
+        if (QFileInfo(QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe").exists()) {
+            imconvert = QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe";
+        }
+
+        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
+    }
+}
+
 void kocrMainWindow::on_importimg_clicked()
 {
-    QStringList images = QFileDialog::getOpenFileNames(this, tr("Open images"), QDir::currentPath(), "Images (*.png *.jpg *.jpeg *.tiff *.tif *.bmp *.gif)");
+    QStringList images = QFileDialog::getOpenFileNames(this, tr("Open images"), startdirectory, "Images (*.png *.jpg *.jpeg *.tiff *.tif *.bmp *.gif)");
     for (int i = 0; i<images.count(); i++) {
         addimagetolist(images.at(i));
     }
@@ -103,7 +109,8 @@ void kocrMainWindow::addimagetolist(QString file)
 {
     QListWidgetItem* fileitem = new QListWidgetItem(file);
     fileitem->setIcon(QIcon(file));
-    ui->listWidget->setIconSize(QSize(256,256));
+    int previewsize = 128;
+    ui->listWidget->setIconSize(QSize(128,128));
     ui->listWidget->addItem(fileitem);
 }
 
@@ -280,8 +287,21 @@ void kocrMainWindow::on_pushButton_2_clicked()
     }
 
     if (!pdf){
-        //ui->webView->setHtml(allpages);
         ui->result->setHtml(allpages);
+        QString finalfile = "";
+        if (html) {
+            finalfile = QFileDialog::getSaveFileName(this, tr("Save html"), startdirectory, ".html (*.html)");
+        } else {
+            finalfile = QFileDialog::getSaveFileName(this, tr("Save text"), startdirectory, ".txt (*.txt)");
+        }
+        if (finalfile != "") {
+            QFile file(finalfile);
+            if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+                QTextStream stream(&file);
+                stream.setCodec("UTF-8");
+                stream << allpages;
+            }
+        }
     } else {
         //merge pdfs if necessary
         //gs -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=${name}.searchable.pdf *.tmp.pdf
@@ -317,41 +337,46 @@ void kocrMainWindow::on_pushButton_2_clicked()
         tempfiles << tmpfilename;
 
         QString finalpdf = "";
-        finalpdf = QFileDialog::getSaveFileName(this, tr("Save pdf"), QDir::currentPath(), "PDF (*.pdf)");
+        finalpdf = QFileDialog::getSaveFileName(this, tr("Save pdf"), startdirectory, "PDF (*.pdf)");
         if (finalpdf == "") {
             finalpdf = tmpfilename;
         } else {
             if (QFileInfo(finalpdf).exists()) QFile::remove(finalpdf);
             QFile::copy(tmpfilename,finalpdf);
         }
-        //ui->webView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
         QString content = "<object src=\"" + finalpdf + "\" width=\"800\" height=\"600\" type='application/pdf'><!---Fallback--->Can't display PDF on this system. The file is " + finalpdf + "</object>";
-        //ui->webView->setHtml(content);
         ui->result->setHtml(content);
-        //if (ui->webView->page()->findText("Can't display PDF on this system. The file is " + finalpdf)) QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
         QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
     }
 
 
 }
 
-
+void kocrMainWindow::displayimage(QListWidgetItem *item, int zoom) {
+    double dzoom = zoom+1.0;
+    if (zoom == 0) dzoom = 1.0;
+    if (zoom < 0) dzoom = -1.0/(zoom-1.0);
+    double scale = 1;
+    if (QFileInfo(item->text()).exists()) {
+        QImage image(item->text());
+        scale = (ui->graphicsView->size().width()-30)*dzoom;
+        int iscale = scale;
+        QGraphicsScene* scene = new QGraphicsScene();
+        ui->graphicsView->setScene(scene);
+        QGraphicsPixmapItem* pixitem = new QGraphicsPixmapItem(QPixmap::fromImage(image.scaledToWidth(iscale)));
+        scene->addItem(pixitem);
+    }
+}
 
 void kocrMainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 {
-    if (QFileInfo(item->text()).exists()) {
-        QImage image(item->text());
-        QGraphicsScene* scene = new QGraphicsScene();
-        ui->graphicsView->setScene(scene);
-        QGraphicsPixmapItem* pixitem = new QGraphicsPixmapItem(QPixmap::fromImage(image));
-        scene->addItem(pixitem);
-    }
+    displayimage(item, ui->horizontalSlider->value());
 }
 
 void kocrMainWindow::on_importpdf_clicked()
 {
 
-    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open pdfs"), QDir::currentPath(), "PDF (*.pdf)");
+    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open pdfs"), startdirectory, "PDF (*.pdf)");
     for (int i = 0; i<files.count(); i++) {
         addpdftolist(files.at(i));
     }
@@ -417,5 +442,12 @@ void kocrMainWindow::on_delimage_clicked()
         {
             delete ui->listWidget->takeItem(ui->listWidget->row(item));
         }
+    }
+}
+
+void kocrMainWindow::on_horizontalSlider_valueChanged(int value)
+{
+    if (ui->listWidget->selectedItems().count()>0) {
+        displayimage(ui->listWidget->selectedItems().at(0), value);
     }
 }

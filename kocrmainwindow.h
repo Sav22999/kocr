@@ -42,6 +42,7 @@ public:
     QString osName();
     QString tesseractocr(QString imagepath, QString command = "", QString language = "", bool html = false, QString pdffile = "");
     QString cuneiformocr(QString imagepath, QString command = "", QString language = "", bool html = false);
+    void findocr();
     QString dpi;
 
 private slots:
@@ -59,13 +60,19 @@ private slots:
 
     void on_delimage_clicked();
 
+    void on_horizontalSlider_valueChanged(int value);
+
 private:
     Ui::kocrMainWindow *ui;
     void addimagetolist(QString file);
     void addpdftolist(QString pdfin);
+    void displayimage(QListWidgetItem *item, int zoom = 0);
     QString gs;
     QString imconvert;
     QStringList tempfiles;
+    QString tesseract;
+    QString cuneiform;
+    QString startdirectory;
 
 };
 

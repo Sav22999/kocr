@@ -34,6 +34,9 @@
         <property name="defaultDropAction">
          <enum>Qt::MoveAction</enum>
         </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::MultiSelection</enum>
+        </property>
        </widget>
       </item>
       <item>
@@ -85,6 +88,12 @@
              </item>
              <item>
               <widget class="QSlider" name="horizontalSlider">
+               <property name="minimum">
+                <number>-4</number>
+               </property>
+               <property name="maximum">
+                <number>4</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
