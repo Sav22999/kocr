@@ -93,7 +93,7 @@ QString kocrMainWindow::osName()
 
 void kocrMainWindow::on_importimg_clicked()
 {
-    QStringList images = QFileDialog::getOpenFileNames(this, tr("Open images"), QDir::currentPath(), "(*.png);; (*.jpg);; (*.jpeg);; (*.tiff);; (*.tif);; (*.bmp);; (*.gif)");
+    QStringList images = QFileDialog::getOpenFileNames(this, tr("Open images"), QDir::currentPath(), "Images (*.png *.jpg *.jpeg *.tiff *.tif *.bmp *.gif)");
     for (int i = 0; i<images.count(); i++) {
         addimagetolist(images.at(i));
     }
@@ -280,7 +280,8 @@ void kocrMainWindow::on_pushButton_2_clicked()
     }
 
     if (!pdf){
-        ui->webView->setHtml(allpages);
+        //ui->webView->setHtml(allpages);
+        ui->result->setHtml(allpages);
     } else {
         //merge pdfs if necessary
         //gs -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=${name}.searchable.pdf *.tmp.pdf
@@ -316,17 +317,19 @@ void kocrMainWindow::on_pushButton_2_clicked()
         tempfiles << tmpfilename;
 
         QString finalpdf = "";
-        finalpdf = QFileDialog::getSaveFileName(this, tr("Save pdf"), QDir::currentPath(), "*.pdf");
+        finalpdf = QFileDialog::getSaveFileName(this, tr("Save pdf"), QDir::currentPath(), "PDF (*.pdf)");
         if (finalpdf == "") {
             finalpdf = tmpfilename;
         } else {
             if (QFileInfo(finalpdf).exists()) QFile::remove(finalpdf);
             QFile::copy(tmpfilename,finalpdf);
         }
-        ui->webView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+        //ui->webView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
         QString content = "<object src=\"" + finalpdf + "\" width=\"800\" height=\"600\" type='application/pdf'><!---Fallback--->Can't display PDF on this system. The file is " + finalpdf + "</object>";
-        ui->webView->setHtml(content);
-        if (ui->webView->page()->findText("Can't display PDF on this system. The file is " + finalpdf)) QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
+        //ui->webView->setHtml(content);
+        ui->result->setHtml(content);
+        //if (ui->webView->page()->findText("Can't display PDF on this system. The file is " + finalpdf)) QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
+        QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
     }
 
 
@@ -348,7 +351,7 @@ void kocrMainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 void kocrMainWindow::on_importpdf_clicked()
 {
 
-    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open pdfs"), QDir::currentPath(), "(*.pdf)");
+    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open pdfs"), QDir::currentPath(), "PDF (*.pdf)");
     for (int i = 0; i<files.count(); i++) {
         addpdftolist(files.at(i));
     }

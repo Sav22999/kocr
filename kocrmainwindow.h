@@ -24,8 +24,9 @@
 #include <QPixmap>
 #include <QImage>
 #include <QUrl>
-#include <QWebSettings>
+//#include <QWebSettings>
 #include <QDesktopServices>
+#include <QDebug>
 
 namespace Ui {
 class kocrMainWindow;

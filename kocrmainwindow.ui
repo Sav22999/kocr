@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>649</width>
+    <width>655</width>
     <height>440</height>
    </rect>
   </property>
@@ -145,13 +145,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QWebView" name="webView">
-             <property name="url">
-              <url>
-               <string>about:blank</string>
-              </url>
-             </property>
-            </widget>
+            <widget class="QTextBrowser" name="result"/>
            </item>
           </layout>
          </widget>
@@ -167,7 +161,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>649</width>
+     <width>655</width>
      <height>30</height>
     </rect>
    </property>
@@ -190,18 +184,11 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout_Kocr">
    <property name="text">
-    <string>About Kocr</string>
+    <string>&amp;About Kocr</string>
    </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>QWebView</class>
-   <extends>QWidget</extends>
-   <header>QtWebKitWidgets/QWebView</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
