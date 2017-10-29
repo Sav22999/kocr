@@ -4,9 +4,9 @@
 #
 #-------------------------------------------------
 
-#Please use Qt5.6.0, in the future I'll shift from webkit to webengine
+#Tested with Qt5.6
 
-QT       += core gui webkitwidgets
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

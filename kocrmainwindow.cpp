@@ -7,6 +7,7 @@ kocrMainWindow::kocrMainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     startdirectory = QDir::currentPath();
+    setWindowTitle(tr("KOcr"));
 
     findocr();
 
@@ -77,6 +78,8 @@ void kocrMainWindow::findocr()
             tesseract = "C:/Programs/tesseract/tesseract.exe";
             if (QFileInfo(tesseract).exists()) {
                 ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+            } else {
+                tesseract = "";
             }
         }
 
@@ -85,12 +88,14 @@ void kocrMainWindow::findocr()
             ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
         }
 
-        if (QFileInfo(QCoreApplication::applicationDirPath() + "/gs/gs.exe").exists()) {
-            gs = QCoreApplication::applicationDirPath() + "/gs/gs.exe";
+        gs = QCoreApplication::applicationDirPath() + "/gs/bin/gswin32c.exe";
+        if (!QFileInfo(gs).exists()) {
+            gs = "";
         }
 
-        if (QFileInfo(QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe").exists()) {
-            imconvert = QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe";
+        imconvert = QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe";
+        if (!QFileInfo(imconvert).exists()) {
+            imconvert = "";
         }
 
         qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
@@ -110,7 +115,7 @@ void kocrMainWindow::addimagetolist(QString file)
     QListWidgetItem* fileitem = new QListWidgetItem(file);
     fileitem->setIcon(QIcon(file));
     int previewsize = 128;
-    ui->listWidget->setIconSize(QSize(128,128));
+    ui->listWidget->setIconSize(QSize(previewsize,previewsize));
     ui->listWidget->addItem(fileitem);
 }
 
@@ -123,12 +128,18 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
     if (ui->ocrengine->currentText() == "Tesseract") {
         QStringList arguments;
         arguments << "--list-langs";
+        //we might need --tessdata-dir  tessdataPath
+        //arguments << "--tessdata-dir";
+        //arguments << tesseract.mid(0,tesseract.lastIndexOf("/")) + "/tessdata/";
         QProcess myProcess;
         myProcess.start(command, arguments);
-        if (!myProcess.waitForFinished())
+        int timeout = -1;//300000; //just use -1 to disable timeout
+        qDebug() << "Timeout: " << timeout;
+        if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
         qDebug() << result;
+        result = result.replace("\r\n","\n");
         for (int i = 0; i<result.split("\n").count(); i++) {
             if (i>0) {
                 if (result.split("\n")[i] != "") ui->language->addItem(result.split("\n")[i]);
@@ -174,7 +185,9 @@ QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString
 
     QProcess myProcess;
     myProcess.start(command, arguments);
-    if (!myProcess.waitForFinished())
+    int timeout = 300000; //just use -1 to disable timeout
+    qDebug() << "Timeout: " << timeout;
+    if (!myProcess.waitForFinished(timeout))
             qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
     qDebug() << result;
@@ -259,7 +272,9 @@ void kocrMainWindow::on_pushButton_2_clicked()
 
         QProcess myProcess;
         myProcess.start(imconvert, arguments);
-        if (!myProcess.waitForFinished())
+        int timeout = 300000; //just use -1 to disable timeout
+        qDebug() << "Timeout: " << timeout;
+        if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
         imagepath = tmpfilename;
@@ -331,7 +346,9 @@ void kocrMainWindow::on_pushButton_2_clicked()
 
         QProcess myProcess;
         myProcess.start(gs, arguments);
-        if (!myProcess.waitForFinished())
+        int timeout = 300000; //just use -1 to disable timeout
+        qDebug() << "Timeout: " << timeout;
+        if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
 
         tempfiles << tmpfilename;
@@ -346,7 +363,12 @@ void kocrMainWindow::on_pushButton_2_clicked()
         }
         QString content = "<object src=\"" + finalpdf + "\" width=\"800\" height=\"600\" type='application/pdf'><!---Fallback--->Can't display PDF on this system. The file is " + finalpdf + "</object>";
         ui->result->setHtml(content);
-        QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
+        if (osName() == "windows" || osName() == "wince") {
+            QDesktopServices::openUrl(QUrl("file:///" + finalpdf, QUrl::TolerantMode));
+        }
+        if (osName() == "linux" || osName() == "unix") {
+            QDesktopServices::openUrl(QUrl("file://" + finalpdf, QUrl::TolerantMode));
+        }
     }
 
 
@@ -412,7 +434,9 @@ void kocrMainWindow::addpdftolist(QString pdfin)
 
     QProcess myProcess;
     myProcess.start(gs, arguments);
-    if (!myProcess.waitForFinished())
+    int timeout = 300000; //just use -1 to disable timeout
+    qDebug() << "Timeout: " << timeout;
+    if (!myProcess.waitForFinished(timeout))
             qDebug() << "Error running subprocess";
 
 
@@ -432,7 +456,7 @@ void kocrMainWindow::addpdftolist(QString pdfin)
 
 void kocrMainWindow::on_actionAbout_Kocr_triggered()
 {
-    QMessageBox::about(this,"About Kocr", "Kocr is a graphical interface for Tesseract with support for HTML and searchable PDF output. \nKocr has been created by Luca Tringali.");
+    QMessageBox::about(this,"About Kocr", "Kocr is a graphical interface for Tesseract with support for HTML and searchable PDF output. \nKocr has been created by Luca Tringali.\nhttps://github.com/zorbaproject/kocr");
 }
 
 void kocrMainWindow::on_delimage_clicked()
