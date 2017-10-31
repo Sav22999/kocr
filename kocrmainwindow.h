@@ -41,7 +41,7 @@ public:
     ~kocrMainWindow();
     QString osName();
     QString tesseractocr(QString imagepath, QString command = "", QString language = "", bool html = false, QString pdffile = "");
-    QString cuneiformocr(QString imagepath, QString command = "", QString language = "", bool html = false);
+    QString cuneiformocr(QString imagepath, QString command = "", QString language = "", bool html = false, QString pdffile = "");
     void findocr();
     QString dpi;
 

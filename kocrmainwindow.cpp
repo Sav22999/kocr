@@ -149,10 +149,30 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             }
         }
         ui->language->setCurrentText("eng");
+        ui->pdf->setEnabled(true);
     }
 
     if (ui->ocrengine->currentData().toString() == "cuneiform") {
         QString command = cuneiform;
+        QStringList arguments;
+        arguments << "-l";
+        QProcess myProcess;
+        myProcess.start(command, arguments);
+        int timeout = -1;//300000; //just use -1 to disable timeout
+        qDebug() << "Timeout: " << timeout;
+        if (!myProcess.waitForFinished(timeout))
+                qDebug() << "Error running subprocess";
+        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+        qDebug() << result;
+        result = result.mid(result.indexOf(":"));
+        result = result.replace(".\n","");
+        for (int i = 0; i<result.split(" ").count(); i++) {
+            if (i>0) {
+                if (result.split(" ")[i] != "") ui->language->addItem(result.split(" ")[i]);
+            }
+        }
+        ui->language->setCurrentText("eng");
+        ui->pdf->setEnabled(false); //actually automatic pdf generation is not supported
     }
 }
 
@@ -219,9 +239,74 @@ QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString
     return text;
 }
 
-QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString language, bool html)
+QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString language, bool html, QString pdffile)
 {
-    //we'll work on this
+    if (command == "") command = cuneiform;
+    if (language == "") language = ui->language->currentText();
+    QStringList arguments;
+    QString pdfdir = "";
+    QString tmpfilename = "";
+
+
+    if (pdffile != "") {
+        pdfdir = QFileInfo(pdffile).absoluteDir().absolutePath();
+        arguments << "-f";
+        arguments << "hocr";
+        arguments << "-o";
+        arguments << pdffile + ".hocr";
+    } else {
+        QTemporaryFile tfile;
+        if (tfile.open()) {
+            tmpfilename = tfile.fileName();
+        }
+        tfile.close();
+        if (html) {
+            arguments << "-f";
+            arguments << "hocr";
+            tmpfilename += ".hocr";
+        } else {
+            arguments << "-f";
+            arguments << "text";
+            tmpfilename += ".txt";
+        }
+        arguments << "-o";
+        arguments << tmpfilename;
+    }
+
+    arguments << "-l";
+    arguments << language;
+
+    arguments << imagepath;
+
+
+    QProcess myProcess;
+    myProcess.start(command, arguments);
+    int timeout = 300000; //just use -1 to disable timeout
+    qDebug() << "Timeout: " << timeout;
+    if (!myProcess.waitForFinished(timeout))
+            qDebug() << "Error running subprocess";
+    QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+    qDebug() << result;
+
+    QString text = "";
+    if (pdffile == "") {
+        QFile file(tmpfilename);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return "";
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            text += in.readLine();
+        }
+        file.close();
+        QFile::remove(tmpfilename);
+    } else {
+        //QString tmphocr = pdffile + ".hocr";
+        // TODO: here we should merge tmphocr and imagepath in pdfile+".pdf"
+        text += pdffile + ".pdf";
+        tempfiles << pdffile + ".pdf";
+    }
+
+    return text;
 }
 
 void kocrMainWindow::on_pushButton_2_clicked()
@@ -287,9 +372,9 @@ void kocrMainWindow::on_pushButton_2_clicked()
 
         QString thispage = "";
         if (ui->ocrengine->currentText() == "Tesseract")
-            thispage = tesseractocr(imagepath, ui->ocrengine->currentData().toString(), language, html, pdffile);
+            thispage = tesseractocr(imagepath, tesseract, language, html, pdffile);
         if (ui->ocrengine->currentText() == "Cuneiform")
-            thispage = cuneiformocr(imagepath, ui->ocrengine->currentData().toString(), language, html);
+            thispage = cuneiformocr(imagepath, cuneiform, language, html);
         qDebug() << thispage;
 
         if (html) {
