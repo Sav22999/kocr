@@ -51,12 +51,16 @@ void kocrMainWindow::findocr()
     if (osName() == "linux" || osName() == "unix") {
         tesseract = "/usr/bin/tesseract";
         if (QFileInfo(tesseract).exists()) {
-            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+            ui->ocrengine->addItem("Tesseract", QVariant("tesseract"));
+        } else {
+            tesseract = "";
         }
 
         cuneiform = "/usr/bin/cuneiform";
         if (QFileInfo(cuneiform).exists()) {
-            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
+            ui->ocrengine->addItem("Cuneiform", QVariant("cuneiform"));
+        } else {
+            cuneiform = "";
         }
 
         if (QFileInfo("/usr/bin/gs").exists()) {
@@ -67,17 +71,16 @@ void kocrMainWindow::findocr()
             imconvert = "/usr/bin/convert";
         }
 
-        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
     }
 
     if (osName() == "windows" || osName() == "wince") {
         tesseract = QCoreApplication::applicationDirPath() + "/tesseract/tesseract.exe";
         if (QFileInfo(tesseract).exists()) {
-            ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+            ui->ocrengine->addItem("Tesseract", QVariant("tesseract"));
         } else {
             tesseract = "C:/Programs/tesseract/tesseract.exe";
             if (QFileInfo(tesseract).exists()) {
-                ui->ocrengine->addItem("Tesseract", QVariant(tesseract));
+                ui->ocrengine->addItem("Tesseract", QVariant("tesseract"));
             } else {
                 tesseract = "";
             }
@@ -85,7 +88,7 @@ void kocrMainWindow::findocr()
 
         cuneiform = QCoreApplication::applicationDirPath() + "/cuneiform/cuneiform.exe";
         if (QFileInfo(cuneiform).exists()) {
-            ui->ocrengine->addItem("Cuneiform", QVariant(cuneiform));
+            ui->ocrengine->addItem("Cuneiform", QVariant("cuneiform"));
         }
 
         gs = QCoreApplication::applicationDirPath() + "/gs/bin/gswin32c.exe";
@@ -98,8 +101,8 @@ void kocrMainWindow::findocr()
             imconvert = "";
         }
 
-        qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
     }
+    qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
 }
 
 void kocrMainWindow::on_importimg_clicked()
@@ -121,11 +124,11 @@ void kocrMainWindow::addimagetolist(QString file)
 
 void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
 {
-    QString command = ui->ocrengine->currentData().toString();
-    for (int i = 0; i<ui->language->count(); i++) ui->language->removeItem(i);
+    ui->language->clear();
 
     //setup language
-    if (ui->ocrengine->currentText() == "Tesseract") {
+    if (ui->ocrengine->currentData().toString() == "tesseract") {
+        QString command = tesseract;
         QStringList arguments;
         arguments << "--list-langs";
         //we might need --tessdata-dir  tessdataPath
@@ -148,14 +151,14 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         ui->language->setCurrentText("eng");
     }
 
-    if (ui->ocrengine->currentText() == "Cuneiform") {
-        QString command = ui->ocrengine->currentData().toString();
+    if (ui->ocrengine->currentData().toString() == "cuneiform") {
+        QString command = cuneiform;
     }
 }
 
 QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString language, bool html, QString pdffile)
 {
-    if (command == "") command = ui->ocrengine->currentData().toString();
+    if (command == "") command = tesseract;
     if (language == "") language = ui->language->currentText();
     QStringList arguments;
     arguments << "-psm";
