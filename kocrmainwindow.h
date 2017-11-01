@@ -24,7 +24,7 @@
 #include <QPixmap>
 #include <QImage>
 #include <QUrl>
-//#include <QWebSettings>
+#include <QTransform>
 #include <QDesktopServices>
 #include <QDebug>
 
@@ -42,6 +42,7 @@ public:
     QString osName();
     QString tesseractocr(QString imagepath, QString command = "", QString language = "", bool html = false, QString pdffile = "");
     QString cuneiformocr(QString imagepath, QString command = "", QString language = "", bool html = false, QString pdffile = "");
+    void rotateimg(QString imgpath, double angle);
     void findocr();
     QString dpi;
 
@@ -62,6 +63,30 @@ private slots:
 
     void on_horizontalSlider_valueChanged(int value);
 
+    void on_actionAbout_Qt_triggered();
+
+    void on_actionImport_from_images_triggered();
+
+    void on_actionImport_from_PDFs_triggered();
+
+    void on_actionDelete_selected_triggered();
+
+    void on_actionClear_selection_triggered();
+
+    void on_actionNew_triggered();
+
+    void on_actionRun_OCR_triggered();
+
+    void on_actionExit_triggered();
+
+    void on_zoomp_clicked();
+
+    void on_zoomm_clicked();
+
+    void on_actionRotate_selected_90_triggered();
+
+    void on_actionRotate_selected_91_triggered();
+
 private:
     Ui::kocrMainWindow *ui;
     void addimagetolist(QString file);
@@ -73,6 +98,7 @@ private:
     QString tesseract;
     QString cuneiform;
     QString startdirectory;
+    int previewitem;
 
 };
 

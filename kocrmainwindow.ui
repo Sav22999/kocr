@@ -91,6 +91,19 @@
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="zoomm">
+                <property name="maximumSize">
+                 <size>
+                  <width>32</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>-</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QSlider" name="horizontalSlider">
                 <property name="minimum">
                  <number>-4</number>
@@ -100,6 +113,26 @@
                 </property>
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="zoomp">
+                <property name="maximumSize">
+                 <size>
+                  <width>32</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>+</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
@@ -130,7 +163,7 @@
               <item>
                <widget class="QRadioButton" name="plaintext">
                 <property name="text">
-                 <string>P&amp;lain text</string>
+                 <string>Plain te&amp;xt</string>
                 </property>
                </widget>
               </item>
@@ -184,7 +217,30 @@
      <string>Abo&amp;ut</string>
     </property>
     <addaction name="actionAbout_Kocr"/>
+    <addaction name="actionAbout_Qt"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>Fi&amp;le</string>
+    </property>
+    <addaction name="actionNew"/>
+    <addaction name="actionRun_OCR"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuPages">
+    <property name="title">
+     <string>Pa&amp;ges</string>
+    </property>
+    <addaction name="actionImport_from_images"/>
+    <addaction name="actionImport_from_PDFs"/>
+    <addaction name="actionDelete_selected"/>
+    <addaction name="actionRotate_selected_90"/>
+    <addaction name="actionRotate_selected_91"/>
+    <addaction name="actionClear_selection"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuPages"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -199,6 +255,56 @@
   <action name="actionAbout_Kocr">
    <property name="text">
     <string>&amp;About Kocr</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionImport_from_images">
+   <property name="text">
+    <string>Import from images</string>
+   </property>
+  </action>
+  <action name="actionImport_from_PDFs">
+   <property name="text">
+    <string>Import from PDFs</string>
+   </property>
+  </action>
+  <action name="actionDelete_selected">
+   <property name="text">
+    <string>Delete selected</string>
+   </property>
+  </action>
+  <action name="actionClear_selection">
+   <property name="text">
+    <string>Clear selection</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionRun_OCR">
+   <property name="text">
+    <string>Run OCR</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionRotate_selected_90">
+   <property name="text">
+    <string>Rotate selected +90°</string>
+   </property>
+  </action>
+  <action name="actionRotate_selected_91">
+   <property name="text">
+    <string>Rotate selected -90°</string>
    </property>
   </action>
  </widget>

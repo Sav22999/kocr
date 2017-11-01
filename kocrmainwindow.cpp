@@ -13,12 +13,14 @@ kocrMainWindow::kocrMainWindow(QWidget *parent) :
 
     ui->plaintext->setChecked(true);
     dpi = "300";
+    previewitem = 0;
 }
 
 kocrMainWindow::~kocrMainWindow()
 {
     for (int i = 0; i<tempfiles.count(); i++) {
         if (QFileInfo(tempfiles.at(i)).exists()) QFile::remove(tempfiles.at(i));
+        qDebug() << "Removing " << tempfiles.at(i);
     }
     delete ui;
 }
@@ -301,7 +303,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         QFile::remove(tmpfilename);
     } else {
         //QString tmphocr = pdffile + ".hocr";
-        // TODO: here we should merge tmphocr and imagepath in pdfile+".pdf"
+        // TODO: here we should merge tmphocr and imagepath in pdfile+".pdf"   https://exactcode.com/opensource/exactimage/  hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
         text += pdffile + ".pdf";
         tempfiles << pdffile + ".pdf";
     }
@@ -480,6 +482,7 @@ void kocrMainWindow::displayimage(QListWidgetItem *item, int zoom) {
 
 void kocrMainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 {
+    previewitem = ui->listWidget->row(item);
     displayimage(item, ui->horizontalSlider->value());
 }
 
@@ -559,7 +562,101 @@ void kocrMainWindow::on_delimage_clicked()
 
 void kocrMainWindow::on_horizontalSlider_valueChanged(int value)
 {
+    if (previewitem < ui->listWidget->count()) {
+        displayimage(ui->listWidget->item(previewitem), value);
+    }
+}
+
+void kocrMainWindow::on_actionAbout_Qt_triggered()
+{
+    QMessageBox::aboutQt(this);
+}
+
+void kocrMainWindow::on_actionImport_from_images_triggered()
+{
+    on_importimg_clicked();
+}
+
+void kocrMainWindow::on_actionImport_from_PDFs_triggered()
+{
+    on_importpdf_clicked();
+}
+
+void kocrMainWindow::on_actionDelete_selected_triggered()
+{
+    on_delimage_clicked();
+}
+
+void kocrMainWindow::on_actionClear_selection_triggered()
+{
+    ui->listWidget->clearSelection();
+}
+
+void kocrMainWindow::on_actionNew_triggered()
+{
+    ui->listWidget->clear();
+    QGraphicsScene* scene = new QGraphicsScene();
+    ui->graphicsView->setScene(scene);
+}
+
+void kocrMainWindow::on_actionRun_OCR_triggered()
+{
+    on_pushButton_2_clicked();
+}
+
+void kocrMainWindow::on_actionExit_triggered()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, tr("Close"),tr("Do you really want to close this program?"), QMessageBox::Yes|QMessageBox::Cancel);
+    if (reply == QMessageBox::Cancel) {
+        return;
+    }
+    QCoreApplication::quit();
+}
+
+void kocrMainWindow::on_zoomp_clicked()
+{
+    int value = ui->horizontalSlider->value() +1;
+    ui->horizontalSlider->setValue(value);
+}
+
+void kocrMainWindow::on_zoomm_clicked()
+{
+    int value = ui->horizontalSlider->value() -1;
+    ui->horizontalSlider->setValue(value);
+}
+
+void kocrMainWindow::on_actionRotate_selected_90_triggered()
+{
+    double angle = 90.0;
     if (ui->listWidget->selectedItems().count()>0) {
-        displayimage(ui->listWidget->selectedItems().at(0), value);
+        foreach(QListWidgetItem * item, ui->listWidget->selectedItems())
+        {
+            rotateimg(item->text(), angle);
+            item->setIcon(QIcon(item->text()));
+        }
+    }
+}
+
+void kocrMainWindow::on_actionRotate_selected_91_triggered()
+{
+    double angle = 270.0;
+    if (ui->listWidget->selectedItems().count()>0) {
+        foreach(QListWidgetItem * item, ui->listWidget->selectedItems())
+        {
+            rotateimg(item->text(), angle);
+            item->setIcon(QIcon(item->text()));
+        }
+    }
+}
+
+void kocrMainWindow::rotateimg(QString imgpath, double angle)
+{
+    if (QFileInfo(imgpath).exists()) {
+        QImage image(imgpath);
+        QTransform rotating;
+        rotating.rotate(angle);
+        image = image.transformed(rotating);
+        image.save(imgpath);
     }
 }
