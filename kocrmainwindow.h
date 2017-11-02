@@ -94,6 +94,7 @@ private:
     void displayimage(QListWidgetItem *item, int zoom = 0);
     QString gs;
     QString imconvert;
+    QString hocr2pdf;
     QStringList tempfiles;
     QString tesseract;
     QString cuneiform;

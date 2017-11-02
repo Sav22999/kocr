@@ -73,6 +73,10 @@ void kocrMainWindow::findocr()
             imconvert = "/usr/bin/convert";
         }
 
+        if (QFileInfo("/usr/bin/hocr2pdf").exists()) {
+            hocr2pdf = "/usr/bin/hocr2pdf";
+        }
+
     }
 
     if (osName() == "windows" || osName() == "wince") {
@@ -104,7 +108,7 @@ void kocrMainWindow::findocr()
         }
 
     }
-    qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert;
+    qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert << hocr2pdf;
 }
 
 void kocrMainWindow::on_importimg_clicked()
@@ -139,7 +143,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         QProcess myProcess;
         myProcess.start(command, arguments);
         int timeout = -1;//300000; //just use -1 to disable timeout
-        qDebug() << "Timeout: " << timeout;
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
@@ -161,7 +164,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         QProcess myProcess;
         myProcess.start(command, arguments);
         int timeout = -1;//300000; //just use -1 to disable timeout
-        qDebug() << "Timeout: " << timeout;
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
@@ -174,7 +176,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             }
         }
         ui->language->setCurrentText("eng");
-        ui->pdf->setEnabled(false); //actually automatic pdf generation is not supported
+        ui->pdf->setEnabled(true); //actually automatic pdf generation is not supported
     }
 }
 
@@ -211,7 +213,6 @@ QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString
     QProcess myProcess;
     myProcess.start(command, arguments);
     int timeout = 300000; //just use -1 to disable timeout
-    qDebug() << "Timeout: " << timeout;
     if (!myProcess.waitForFinished(timeout))
             qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
@@ -256,6 +257,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         arguments << "hocr";
         arguments << "-o";
         arguments << pdffile + ".hocr";
+        tempfiles << pdffile + ".hocr";
     } else {
         QTemporaryFile tfile;
         if (tfile.open()) {
@@ -284,7 +286,6 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
     QProcess myProcess;
     myProcess.start(command, arguments);
     int timeout = 300000; //just use -1 to disable timeout
-    qDebug() << "Timeout: " << timeout;
     if (!myProcess.waitForFinished(timeout))
             qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
@@ -302,8 +303,27 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         file.close();
         QFile::remove(tmpfilename);
     } else {
-        //QString tmphocr = pdffile + ".hocr";
-        // TODO: here we should merge tmphocr and imagepath in pdfile+".pdf"   https://exactcode.com/opensource/exactimage/  hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
+        // TODO: here we should merge tmphocr and imagepath in pdffile+".pdf"   https://exactcode.com/opensource/exactimage/  hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
+        QImage image(imagepath);
+        image.convertToFormat(QImage::Format_RGB32);
+        image.save(pdffile + ".jpg");
+        tempfiles << pdffile + ".jpg";
+
+        QStringList parguments;
+        parguments << "-i";
+        parguments << pdffile + ".jpg";
+        parguments << "-o";
+        parguments << pdffile + ".pdf";
+
+        QProcess myProcess;
+        myProcess.setStandardInputFile(pdffile + ".hocr");
+        myProcess.start(hocr2pdf, parguments);
+        int timeout = 300000; //just use -1 to disable timeout
+        if (!myProcess.waitForFinished(timeout))
+                qDebug() << "Error running subprocess";
+        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+        qDebug() << result;
+
         text += pdffile + ".pdf";
         tempfiles << pdffile + ".pdf";
     }
@@ -344,7 +364,20 @@ void kocrMainWindow::on_pushButton_2_clicked()
     for (int i = 0; i < ui->listWidget->count(); i++) {
         QString imagepath = ui->listWidget->item(i)->text();
 
+        //Maybe in the future we could do this with QImage instead of imagemagick
         //convert "$f" -background white -flatten +matte "${f%.*}.tiff"
+        /*QString tmpfilename = "";
+        QTemporaryFile tfile;
+        if (tfile.open()) {
+            tmpfilename = tfile.fileName().replace(".","-") + QString(".tiff");
+        }
+        tfile.close();
+        arguments << tmpfilename;
+
+        QImage image(imagepath);
+        image.convertToFormat(QImage::Format_RGB32);
+        image.save(tmpfilename);*/
+
         QStringList arguments;
         arguments << imagepath;
         arguments << "-background";
@@ -363,10 +396,10 @@ void kocrMainWindow::on_pushButton_2_clicked()
         QProcess myProcess;
         myProcess.start(imconvert, arguments);
         int timeout = 300000; //just use -1 to disable timeout
-        qDebug() << "Timeout: " << timeout;
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+
         imagepath = tmpfilename;
 
         QString pdffile = "";
@@ -376,7 +409,7 @@ void kocrMainWindow::on_pushButton_2_clicked()
         if (ui->ocrengine->currentText() == "Tesseract")
             thispage = tesseractocr(imagepath, tesseract, language, html, pdffile);
         if (ui->ocrengine->currentText() == "Cuneiform")
-            thispage = cuneiformocr(imagepath, cuneiform, language, html);
+            thispage = cuneiformocr(imagepath, cuneiform, language, html, pdffile);
         qDebug() << thispage;
 
         if (html) {
@@ -437,7 +470,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
         QProcess myProcess;
         myProcess.start(gs, arguments);
         int timeout = 300000; //just use -1 to disable timeout
-        qDebug() << "Timeout: " << timeout;
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
 
@@ -526,7 +558,6 @@ void kocrMainWindow::addpdftolist(QString pdfin)
     QProcess myProcess;
     myProcess.start(gs, arguments);
     int timeout = 300000; //just use -1 to disable timeout
-    qDebug() << "Timeout: " << timeout;
     if (!myProcess.waitForFinished(timeout))
             qDebug() << "Error running subprocess";
 
