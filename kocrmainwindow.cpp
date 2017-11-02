@@ -8,6 +8,7 @@ kocrMainWindow::kocrMainWindow(QWidget *parent) :
     ui->setupUi(this);
     startdirectory = QDir::currentPath();
     setWindowTitle(tr("KOcr"));
+    ui->mainToolBar->hide();
 
     findocr();
 
@@ -70,7 +71,7 @@ void kocrMainWindow::findocr()
             gs = "";
         }
 
-        hocr2pdf = "/usr/bin/hocr2pdf"; //https://exactcode.com/opensource/exactimage/
+        hocr2pdf = "/usr/bin/hocr2pdf";
         if (!QFileInfo(hocr2pdf).exists()) {
             hocr2pdf = "";
         }
@@ -144,7 +145,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
-        qDebug() << result;
         result = result.replace("\r\n","\n");
         for (int i = 0; i<result.split("\n").count(); i++) {
             if (i>0) {
@@ -165,7 +165,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
-        qDebug() << result;
         result = result.mid(result.indexOf(":"));
         result = result.replace(".\n","");
         for (int i = 0; i<result.split(" ").count(); i++) {
@@ -389,7 +388,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
             thispage = tesseractocr(imagepath, tesseract, language, html, pdffile);
         if (ui->ocrengine->currentText() == "Cuneiform")
             thispage = cuneiformocr(imagepath, cuneiform, language, html, pdffile);
-        qDebug() << thispage;
 
         if (html) {
             allpages += thispage + "\n</br></hr>";
@@ -497,8 +495,12 @@ void kocrMainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
 
 void kocrMainWindow::on_importpdf_clicked()
 {
-
     QStringList files = QFileDialog::getOpenFileNames(this, tr("Open pdfs"), startdirectory, "PDF (*.pdf)");
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, tr("Please wait"),tr("This is going to take a few minutes. Meanwhile, you can have an espresso coffee. Maybe also some cookies, if there are a lot of pages to extract from PDFs."), QMessageBox::Ok|QMessageBox::Cancel);
+    if (reply == QMessageBox::Cancel) {
+        return;
+    }
     for (int i = 0; i<files.count(); i++) {
         addpdftolist(files.at(i));
     }
@@ -546,7 +548,6 @@ void kocrMainWindow::addpdftolist(QString pdfin)
     QFileInfoList list = pdir.entryInfoList();
     for (int i = 0; i < list.size(); ++i) {
         QFileInfo fileInfo = list.at(i);
-        qDebug() << fileInfo.absoluteFilePath();
         tempfiles << fileInfo.absoluteFilePath();
         addimagetolist(fileInfo.absoluteFilePath());
     }
@@ -555,7 +556,7 @@ void kocrMainWindow::addpdftolist(QString pdfin)
 
 void kocrMainWindow::on_actionAbout_Kocr_triggered()
 {
-    QMessageBox::about(this,"About Kocr", "Kocr is a graphical interface for Tesseract with support for HTML and searchable PDF output. \nKocr has been created by Luca Tringali.\nhttps://github.com/zorbaproject/kocr");
+    QMessageBox::about(this,"About Kocr", "Kocr is a graphical interface for Tesseract and Cuneiform with support for HTML and searchable PDF output. \nKocr has been created by Luca Tringali.\nhttps://github.com/zorbaproject/kocr");
 }
 
 void kocrMainWindow::on_delimage_clicked()

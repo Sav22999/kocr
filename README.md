@@ -1,15 +1,15 @@
 # Kocr
 
-Kocr is a graphical interface for Tesseract with support for HTML and searchable PDF output on GNU/Linux, Windows, and possibly MacOS.
+Kocr is a graphical interface for Tesseract and Cuneiform with support for plain text, HTML formatted text, and searchable PDF output on GNU/Linux, Windows, and possibly MacOS.
 
 # Requirements
 
 Kocr works with Qt 5.6 graphical libraries.
 
 Kocr uses the following programs:
-* Tesseract
-* Ghostscript
-* Imagemagick
+* Tesseract (https://github.com/tesseract-ocr/tesseract) or Cuneiform (https://portableapps.com/node/27987)
+* Ghostscript (https://www.ghostscript.com/download/gsdnld.html)
+* hocr2pdf (https://exactcode.com/opensource/exactimage/)
 
 Please, check the releases section for binary packages if you want to try it. On GNU/Linux, dependencies must be installed using your system's packaging tools (E.G.: On Debian it's apt-get). On Windows, they must be placed on C:\Programs or in subfolders of kocr directory (as they are in the release zip file).
 
