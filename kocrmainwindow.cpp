@@ -18,9 +18,9 @@ kocrMainWindow::kocrMainWindow(QWidget *parent) :
 
 kocrMainWindow::~kocrMainWindow()
 {
-    for (int i = 0; i<tempfiles.count(); i++) {
-        if (QFileInfo(tempfiles.at(i)).exists()) QFile::remove(tempfiles.at(i));
-        qDebug() << "Removing " << tempfiles.at(i);
+    for (int i = tempfiles.count(); i>0; i--) {
+        if (QFileInfo(tempfiles.at(i-1)).exists()) QFile::remove(tempfiles.at(i-1));
+        qDebug() << "Removing " << tempfiles.at(i-1);
     }
     delete ui;
 }
@@ -65,16 +65,14 @@ void kocrMainWindow::findocr()
             cuneiform = "";
         }
 
-        if (QFileInfo("/usr/bin/gs").exists()) {
-            gs = "/usr/bin/gs";
+        gs = "/usr/bin/gs";
+        if (!QFileInfo(gs).exists()) {
+            gs = "";
         }
 
-        if (QFileInfo("/usr/bin/convert").exists()) {
-            imconvert = "/usr/bin/convert";
-        }
-
-        if (QFileInfo("/usr/bin/hocr2pdf").exists()) {
-            hocr2pdf = "/usr/bin/hocr2pdf";
+        hocr2pdf = "/usr/bin/hocr2pdf"; //https://exactcode.com/opensource/exactimage/
+        if (!QFileInfo(hocr2pdf).exists()) {
+            hocr2pdf = "";
         }
 
     }
@@ -102,13 +100,13 @@ void kocrMainWindow::findocr()
             gs = "";
         }
 
-        imconvert = QCoreApplication::applicationDirPath() + "/imagemagick/convert.exe";
-        if (!QFileInfo(imconvert).exists()) {
-            imconvert = "";
+        hocr2pdf = QCoreApplication::applicationDirPath() + "/hocr2pdf/hocr2pdf.exe";
+        if (!QFileInfo(hocr2pdf).exists()) {
+            hocr2pdf = "";
         }
 
     }
-    qDebug() << "Found programs: " << tesseract << cuneiform << gs << imconvert << hocr2pdf;
+    qDebug() << "Found programs: " << tesseract << cuneiform << gs << hocr2pdf;
 }
 
 void kocrMainWindow::on_importimg_clicked()
@@ -176,7 +174,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             }
         }
         ui->language->setCurrentText("eng");
-        ui->pdf->setEnabled(true); //actually automatic pdf generation is not supported
+        if (hocr2pdf == "") ui->pdf->setEnabled(false);
     }
 }
 
@@ -303,9 +301,9 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         file.close();
         QFile::remove(tmpfilename);
     } else {
-        // TODO: here we should merge tmphocr and imagepath in pdffile+".pdf"   https://exactcode.com/opensource/exactimage/  hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
+        // hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
         QImage image(imagepath);
-        image.convertToFormat(QImage::Format_RGB32);
+        image = image.convertToFormat(QImage::Format_RGB32);
         image.save(pdffile + ".jpg");
         tempfiles << pdffile + ".jpg";
 
@@ -366,39 +364,20 @@ void kocrMainWindow::on_pushButton_2_clicked()
 
         //Maybe in the future we could do this with QImage instead of imagemagick
         //convert "$f" -background white -flatten +matte "${f%.*}.tiff"
-        /*QString tmpfilename = "";
-        QTemporaryFile tfile;
-        if (tfile.open()) {
-            tmpfilename = tfile.fileName().replace(".","-") + QString(".tiff");
-        }
-        tfile.close();
-        arguments << tmpfilename;
-
-        QImage image(imagepath);
-        image.convertToFormat(QImage::Format_RGB32);
-        image.save(tmpfilename);*/
-
-        QStringList arguments;
-        arguments << imagepath;
-        arguments << "-background";
-        arguments << "white";
-        arguments << "-flatten";
-        arguments << "+matte";
-
         QString tmpfilename = "";
         QTemporaryFile tfile;
         if (tfile.open()) {
             tmpfilename = tfile.fileName().replace(".","-") + QString(".tiff");
         }
         tfile.close();
-        arguments << tmpfilename;
+        tempfiles << tmpfilename;
 
-        QProcess myProcess;
-        myProcess.start(imconvert, arguments);
-        int timeout = 300000; //just use -1 to disable timeout
-        if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
-        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+        QImage image(imagepath);
+        QImage image2(image.size(), QImage::Format_RGB32);
+        image2.fill(QColor(Qt::white).rgb());
+        QPainter painter(&image2);
+        painter.drawImage(0, 0, image);
+        image2.save(tmpfilename);
 
         imagepath = tmpfilename;
 
@@ -419,8 +398,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
         } else {
             allpages += thispage + "\n";
         }
-
-        QFile::remove(tmpfilename);
 
     }
 
