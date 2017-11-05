@@ -7,7 +7,7 @@ Kocr is a graphical interface for Tesseract and Cuneiform with support for plain
 Kocr works with Qt 5.6 graphical libraries.
 
 Kocr uses the following programs:
-* Tesseract (https://github.com/tesseract-ocr/tesseract) or Cuneiform (https://portableapps.com/node/27987)
+* Tesseract (https://github.com/tesseract-ocr/tesseract) or Cuneiform (https://answers.launchpad.net/cuneiform-linux/+question/266152)
 * Ghostscript (https://www.ghostscript.com/download/gsdnld.html)
 * hocr2pdf (https://exactcode.com/opensource/exactimage/)
 

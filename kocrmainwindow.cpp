@@ -83,7 +83,7 @@ void kocrMainWindow::findocr()
         if (QFileInfo(tesseract).exists()) {
             ui->ocrengine->addItem("Tesseract", QVariant("tesseract"));
         } else {
-            tesseract = "C:/Programs/tesseract/tesseract.exe";
+            tesseract = "C:/Program Files/tesseract/tesseract.exe";
             if (QFileInfo(tesseract).exists()) {
                 ui->ocrengine->addItem("Tesseract", QVariant("tesseract"));
             } else {
@@ -94,6 +94,13 @@ void kocrMainWindow::findocr()
         cuneiform = QCoreApplication::applicationDirPath() + "/cuneiform/cuneiform.exe";
         if (QFileInfo(cuneiform).exists()) {
             ui->ocrengine->addItem("Cuneiform", QVariant("cuneiform"));
+        } else {
+            cuneiform = "C:/Program Files/cuneiform/cuneiform.exe";
+            if (QFileInfo(cuneiform).exists()) {
+                ui->ocrengine->addItem("Cuneiform", QVariant("cuneiform"));
+            } else {
+                cuneiform = "";
+            }
         }
 
         gs = QCoreApplication::applicationDirPath() + "/gs/bin/gswin32c.exe";
@@ -156,25 +163,48 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
     }
 
     if (ui->ocrengine->currentData().toString() == "cuneiform") {
-        QString command = cuneiform;
-        QStringList arguments;
-        arguments << "-l";
-        QProcess myProcess;
-        myProcess.start(command, arguments);
-        int timeout = -1;//300000; //just use -1 to disable timeout
-        if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
-        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
-        result = result.mid(result.indexOf(":"));
-        result = result.replace(".\n","");
-        for (int i = 0; i<result.split(" ").count(); i++) {
-            if (i>0) {
-                if (result.split(" ")[i] != "") ui->language->addItem(result.split(" ")[i]);
+        if (osName() == "windows" || osName() == "wince") {
+            QString command = "regsvr32";
+            QStringList arguments;
+            arguments << QFileInfo(cuneiform).absolutePath() + "/Puma.NET/COM Server/APuma.dll";
+            QProcess myProcess;
+            myProcess.setWorkingDirectory(QFileInfo(cuneiform).absolutePath() + "/Puma.NET/COM Server/");
+            myProcess.start(command, arguments);
+            int timeout = -1;//300000; //just use -1 to disable timeout
+            if (!myProcess.waitForFinished(timeout))
+                    qDebug() << "Error running subprocess";
+            QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+            qDebug() << result;
+            result = "Bulgarian, Croatian, Czech, Danish, Digits, Dutch, English, Estonian, French, German, Hungarian, Italian, Lettish, Lithuanian, Polish, Portuguese, Romanian, Russian, RussianEnglish, Serbian, Slovenian, Spanish, Swedish, Ukrainian";
+            result = result.replace(",","");
+            for (int i = 0; i<result.split(" ").count(); i++) {
+                if (i>0) {
+                    if (result.split(" ")[i] != "") ui->language->addItem(result.split(" ")[i]);
+                }
             }
+            ui->language->setCurrentText("English");
+            if (hocr2pdf == "") ui->pdf->setEnabled(false);
+        } else {
+            QString command = cuneiform;
+            QStringList arguments;
+            arguments << "-l";
+            QProcess myProcess;
+            myProcess.start(command, arguments);
+            int timeout = -1;//300000; //just use -1 to disable timeout
+            if (!myProcess.waitForFinished(timeout))
+                    qDebug() << "Error running subprocess";
+            QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+            result = result.mid(result.indexOf(":"));
+            result = result.replace(".\n","");
+            for (int i = 0; i<result.split(" ").count(); i++) {
+                if (i>0) {
+                    if (result.split(" ")[i] != "") ui->language->addItem(result.split(" ")[i]);
+                }
+            }
+            ui->language->setCurrentText("eng");
+            if (hocr2pdf == "") ui->pdf->setEnabled(false);
         }
-        ui->language->setCurrentText("eng");
-        if (hocr2pdf == "") ui->pdf->setEnabled(false);
-    }
+        }
 }
 
 QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString language, bool html, QString pdffile)
@@ -247,37 +277,66 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
     QString pdfdir = "";
     QString tmpfilename = "";
 
-
     if (pdffile != "") {
         pdfdir = QFileInfo(pdffile).absoluteDir().absolutePath();
-        arguments << "-f";
-        arguments << "hocr";
-        arguments << "-o";
-        arguments << pdffile + ".hocr";
+        if (osName() == "windows" || osName() == "wince") {
+            arguments << "-FileFormat=\"HtmlAnsi\"";
+        } else {
+            arguments << "-f";
+            arguments << "hocr";
+        }
+        if (osName() == "windows" || osName() == "wince") {
+            arguments << "-RecognizeToFileName=\"" + pdffile + ".hocr" + "\"";
+        } else {
+            arguments << "-o";
+            arguments << pdffile + ".hocr";
+        }
         tempfiles << pdffile + ".hocr";
     } else {
         QTemporaryFile tfile;
         if (tfile.open()) {
-            tmpfilename = tfile.fileName();
+            tmpfilename = tfile.fileName().replace(".","-");
         }
         tfile.close();
         if (html) {
-            arguments << "-f";
-            arguments << "hocr";
-            tmpfilename += ".hocr";
+            if (osName() == "windows" || osName() == "wince") {
+                arguments << "-FileFormat=RtfAnsi";
+                tmpfilename += ".rtf";
+            } else {
+                arguments << "-f";
+                arguments << "hocr";
+                tmpfilename += ".hocr";
+            }
         } else {
-            arguments << "-f";
-            arguments << "text";
+            if (osName() == "windows" || osName() == "wince") {
+                arguments << "-FileFormat=TxtAnsi";
+            } else {
+                arguments << "-f";
+                arguments << "text";
+            }
             tmpfilename += ".txt";
         }
-        arguments << "-o";
-        arguments << tmpfilename;
+        if (osName() == "windows" || osName() == "wince") {
+            arguments << "-RecognizeToFileName=" + tmpfilename;
+        } else {
+            arguments << "-o";
+            arguments << tmpfilename;
+        }
     }
 
-    arguments << "-l";
-    arguments << language;
+    if (osName() == "windows" || osName() == "wince") {
+        arguments << "-Language=" + language;
+    } else {
+        arguments << "-l";
+        arguments << language;
+    }
 
-    arguments << imagepath;
+    if (osName() == "windows" || osName() == "wince") {
+        arguments << "-LoadImage=" + imagepath + "";
+    } else {
+        arguments << imagepath;
+    }
+
 
 
     QProcess myProcess;
@@ -287,6 +346,20 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
             qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
     qDebug() << result;
+
+    if (tmpfilename.right(4) == ".rtf") {
+        QString command = QFileInfo(cuneiform).absolutePath() + "/rtf2html.exe";
+        QStringList arguments;
+        arguments << tmpfilename;
+        arguments << tmpfilename.right(4) + ".hocr";
+        QProcess myProcess;
+        myProcess.start(command, arguments);
+        int timeout = -1;//300000; //just use -1 to disable timeout
+        if (!myProcess.waitForFinished(timeout))
+                qDebug() << "Error running subprocess";
+        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
+        tmpfilename = tmpfilename.right(4) + ".hocr";
+    }
 
     QString text = "";
     if (pdffile == "") {
@@ -645,6 +718,7 @@ void kocrMainWindow::on_actionRotate_selected_90_triggered()
             item->setIcon(QIcon(item->text()));
         }
     }
+    //reload preview
 }
 
 void kocrMainWindow::on_actionRotate_selected_91_triggered()
@@ -657,6 +731,7 @@ void kocrMainWindow::on_actionRotate_selected_91_triggered()
             item->setIcon(QIcon(item->text()));
         }
     }
+    //reload preview
 }
 
 void kocrMainWindow::rotateimg(QString imgpath, double angle)
