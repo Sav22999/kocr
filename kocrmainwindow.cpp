@@ -164,6 +164,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
 
     if (ui->ocrengine->currentData().toString() == "cuneiform") {
         if (osName() == "windows" || osName() == "wince") {
+            // TODO: check if the library has already been registered
             QString command = "regsvr32";
             QStringList arguments;
             arguments << QFileInfo(cuneiform).absolutePath() + "/Puma.NET/COM Server/APuma.dll";
@@ -585,6 +586,7 @@ void kocrMainWindow::addpdftolist(QString pdfin)
 {
     if (!QFileInfo(pdfin).exists()) return;
 
+    // TODO: Maybe we could replace gs with https://doc.qt.io/archives/qq/qq27-poppler.html and https://sourceforge.net/projects/poppler-win32/ or http://blog.qt.io/blog/2017/01/30/new-qtpdf-qtlabs-module/
     //gs -dNOPAUSE -q -r$dpix$dpi -sDEVICE=tiff32nc -dBATCH -sOutputFile="$name-%04d.tmppage.tiff" "$fullname"
     QStringList arguments;
     arguments << "-dNOPAUSE";
