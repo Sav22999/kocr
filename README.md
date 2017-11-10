@@ -27,5 +27,5 @@ Please, take note that the OCR process may take several minutes. The program may
 
 # Credits
 
-Kocr has been created by Luca Tringali and is relased under GNU GPL3. Kocr is free software, you are free to fork it and add as many changes as you like.
-If you use Tesseract, Imagemagick, and Ghostscript you accept their license. Special thanks goes to the people that wrote those tools for handling images, pdf, and performing OCR.
+Kocr has been created by Luca Tringali and is relased under GNU GPL3. Kocr is free software, you are free to fork it and apply as many changes as you like. If you want to contribute to this code, please keep in mind that I'm looking for something that works on both GNU/Linux and Windows and it's as simple as it could possibly be. This program should do one thing, and do it good.
+If you use Tesseract, Cuneiform, and Ghostscript you accept their license. Special thanks goes to the people that wrote those tools for handling images, pdf, and performing OCR.
