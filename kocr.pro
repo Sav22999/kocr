@@ -20,3 +20,8 @@ SOURCES += main.cpp\
 HEADERS  += kocrmainwindow.h
 
 FORMS    += kocrmainwindow.ui
+
+unix {
+   target.path = /usr/bin
+   INSTALLS += target
+}
