@@ -27,6 +27,8 @@
 #include <QTransform>
 #include <QDesktopServices>
 #include <QDebug>
+#include <poppler/qt5/poppler-qt5.h>  //from libpoppler-qt5-dev or https://sourceforge.net/projects/poppler-win32/
+#include <QPdfWriter>
 
 namespace Ui {
 class kocrMainWindow;
@@ -92,7 +94,6 @@ private:
     void addimagetolist(QString file);
     void addpdftolist(QString pdfin);
     void displayimage(QListWidgetItem *item, int zoom = 0);
-    QString gs;
     QString hocr2pdf;
     QStringList tempfiles;
     QString tesseract;

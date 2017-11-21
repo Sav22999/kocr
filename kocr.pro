@@ -21,6 +21,8 @@ HEADERS  += kocrmainwindow.h
 
 FORMS    += kocrmainwindow.ui
 
+LIBS     += -lpoppler-qt5
+
 unix {
    target.path = /usr/bin
    INSTALLS += target

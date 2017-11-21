@@ -66,11 +66,6 @@ void kocrMainWindow::findocr()
             cuneiform = "";
         }
 
-        gs = "/usr/bin/gs";
-        if (!QFileInfo(gs).exists()) {
-            gs = "";
-        }
-
         hocr2pdf = "/usr/bin/hocr2pdf";
         if (!QFileInfo(hocr2pdf).exists()) {
             hocr2pdf = "";
@@ -103,18 +98,13 @@ void kocrMainWindow::findocr()
             }
         }
 
-        gs = QCoreApplication::applicationDirPath() + "/gs/bin/gswin32c.exe";
-        if (!QFileInfo(gs).exists()) {
-            gs = "";
-        }
-
         hocr2pdf = QCoreApplication::applicationDirPath() + "/hocr2pdf/hocr2pdf.exe";
         if (!QFileInfo(hocr2pdf).exists()) {
             hocr2pdf = "";
         }
 
     }
-    qDebug() << "Found programs: " << tesseract << cuneiform << gs << hocr2pdf;
+    qDebug() << "Found programs: " << tesseract << cuneiform << hocr2pdf;
 }
 
 void kocrMainWindow::on_importimg_clicked()
@@ -435,7 +425,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
     for (int i = 0; i < ui->listWidget->count(); i++) {
         QString imagepath = ui->listWidget->item(i)->text();
 
-        //Maybe in the future we could do this with QImage instead of imagemagick
         //convert "$f" -background white -flatten +matte "${f%.*}.tiff"
         QString tmpfilename = "";
         QTemporaryFile tfile;
@@ -492,35 +481,45 @@ void kocrMainWindow::on_pushButton_2_clicked()
     } else {
         //merge pdfs if necessary
         //gs -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=${name}.searchable.pdf *.tmp.pdf
-        QStringList arguments;
-        arguments << "-dCompatibilityLevel=1.4";
-        arguments << "-dNOPAUSE";
-        arguments << "-dQUIET";
-        arguments << "-dBATCH";
-        arguments << "-dNOPAUSE";
-        arguments << "-q";
-        arguments << "-sDEVICE=pdfwrite";
         QString tmpfilename = "";
         QTemporaryFile tfile;
         if (tfile.open()) {
             tmpfilename = tfile.fileName() + QString(".pdf");
         }
         tfile.close();
-        QString out = "-sOutputFile=";
-        out += tmpfilename;
-        arguments << out;
+
+         QPdfWriter pdfWriter(tmpfilename);
+         QPainter painter(&pdfWriter);
 
         for (int i = 0; i<allpages.split("|").count(); i++) {
              QString inp = "";
              inp = allpages.split("|").at(i);
-             if (QFileInfo(inp).exists()) arguments << inp;
-         }
+             if (QFileInfo(inp).exists()) {
 
-        QProcess myProcess;
-        myProcess.start(gs, arguments);
-        int timeout = 300000; //just use -1 to disable timeout
-        if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
+                 if (i>0) pdfWriter.newPage();
+                 Poppler::Document* document = Poppler::Document::load(inp);
+                 //document->setRenderBackend(Poppler::Document::RenderBackend::ArthurBackend); //you only need this if you want to use pdfPage->renderToPainter(&painter);
+                 if (!document || document->isLocked()) return;
+                 for (int t = 0; t<document->numPages(); t++) {
+                    Poppler::Page* pdfPage = document->page(t);  // Document starts at page 0
+                    if (pdfPage == 0) break;
+                    //pdfPage->renderToPainter(&painter,dpi.toInt(),dpi.toInt());
+                    QList<Poppler::TextBox*> tb = pdfPage->textList();
+                    for (int n = 0; n<tb.count(); n++) {
+                        QRectF origRect = tb.at(n)->boundingBox();
+                        double ratiow = pdfWriter.width()/pdfPage->pageSizeF().width();
+                        double ratioh = pdfWriter.height()/pdfPage->pageSizeF().height();
+                        QRectF newRect(origRect.x()*ratiow,origRect.y()*ratioh,origRect.width()*ratiow,origRect.height()*ratioh);
+                        painter.drawText(newRect, tb.at(n)->text());
+                    }
+                    painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(pdfPage->renderToImage(dpi.toInt(),dpi.toInt())));
+                    //QTextDocument td;
+                    //td.setHtml(hocr);
+                    //td.drawContents(&painter);
+                 }
+                 delete document;
+             }
+         }
 
         tempfiles << tmpfilename;
 
@@ -586,15 +585,7 @@ void kocrMainWindow::addpdftolist(QString pdfin)
 {
     if (!QFileInfo(pdfin).exists()) return;
 
-    // TODO: Maybe we could replace gs with https://doc.qt.io/archives/qq/qq27-poppler.html and https://sourceforge.net/projects/poppler-win32/ or http://blog.qt.io/blog/2017/01/30/new-qtpdf-qtlabs-module/
     //gs -dNOPAUSE -q -r$dpix$dpi -sDEVICE=tiff32nc -dBATCH -sOutputFile="$name-%04d.tmppage.tiff" "$fullname"
-    QStringList arguments;
-    arguments << "-dNOPAUSE";
-    arguments << "-q";
-    arguments << "-r" + dpi + "x" + dpi;
-    arguments << "-sDEVICE=tiff32nc";
-    arguments << "-dBATCH";
-    QString tmpfilename = "";
     QString tmpdir = "";
     QTemporaryDir dir;
     if (dir.isValid()) {
@@ -602,19 +593,21 @@ void kocrMainWindow::addpdftolist(QString pdfin)
         dir.setAutoRemove(false);
     }
     tempfiles << tmpdir;
-    tmpfilename = tmpdir + QString("/tmppage%04d.tiff");
-    QString out = "-sOutputFile=";
-    out += tmpfilename;
-    arguments << out;
 
-    arguments << pdfin;
+    Poppler::Document* document = Poppler::Document::load(pdfin);
+    if (!document || document->isLocked()) return;
 
-    QProcess myProcess;
-    myProcess.start(gs, arguments);
-    int timeout = 300000; //just use -1 to disable timeout
-    if (!myProcess.waitForFinished(timeout))
-            qDebug() << "Error running subprocess";
-
+    for (int i = 0; i<document->numPages(); i++) {
+        Poppler::Page* pdfPage = document->page(i);  // Document starts at page 0
+        if (pdfPage == 0) break;
+        QImage tmpimage = pdfPage->renderToImage(dpi.toInt(), dpi.toInt());
+        QString tmpfilename = "";
+        tmpfilename = tmpdir + QString("/tmppage") + QString::number(i).rightJustified(4, '0') + QString(".tiff");
+        tmpimage.save(tmpfilename);
+        qDebug() << tmpfilename;
+        delete pdfPage;
+    }
+    delete document;
 
     //now we open images
     QDir pdir(tmpdir);
