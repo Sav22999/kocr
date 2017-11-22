@@ -66,11 +66,6 @@ void kocrMainWindow::findocr()
             cuneiform = "";
         }
 
-        hocr2pdf = "/usr/bin/hocr2pdf";
-        if (!QFileInfo(hocr2pdf).exists()) {
-            hocr2pdf = "";
-        }
-
     }
 
     if (osName() == "windows" || osName() == "wince") {
@@ -98,13 +93,8 @@ void kocrMainWindow::findocr()
             }
         }
 
-        hocr2pdf = QCoreApplication::applicationDirPath() + "/hocr2pdf/hocr2pdf.exe";
-        if (!QFileInfo(hocr2pdf).exists()) {
-            hocr2pdf = "";
-        }
-
     }
-    qDebug() << "Found programs: " << tesseract << cuneiform << hocr2pdf;
+    qDebug() << "Found programs: " << tesseract << cuneiform;
 }
 
 void kocrMainWindow::on_importimg_clicked()
@@ -174,7 +164,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
                 }
             }
             ui->language->setCurrentText("English");
-            if (hocr2pdf == "") ui->pdf->setEnabled(false);
         } else {
             QString command = cuneiform;
             QStringList arguments;
@@ -193,7 +182,6 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
                 }
             }
             ui->language->setCurrentText("eng");
-            if (hocr2pdf == "") ui->pdf->setEnabled(false);
         }
         }
 }
@@ -297,6 +285,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
                 arguments << "-f";
                 arguments << "hocr";
                 tmpfilename += ".hocr";
+                qDebug() << tmpfilename;
             }
         } else {
             if (osName() == "windows" || osName() == "wince") {
@@ -362,28 +351,81 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
             text += in.readLine();
         }
         file.close();
-        QFile::remove(tmpfilename);
+        //QFile::remove(tmpfilename);
     } else {
         // hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
-        QImage image(imagepath);
-        image = image.convertToFormat(QImage::Format_RGB32);
-        image.save(pdffile + ".jpg");
-        tempfiles << pdffile + ".jpg";
 
-        QStringList parguments;
-        parguments << "-i";
-        parguments << pdffile + ".jpg";
-        parguments << "-o";
-        parguments << pdffile + ".pdf";
+        QPdfWriter pdfWriter(pdffile + ".pdf");
+        QPainter painter(&pdfWriter);
 
-        QProcess myProcess;
-        myProcess.setStandardInputFile(pdffile + ".hocr");
-        myProcess.start(hocr2pdf, parguments);
-        int timeout = 300000; //just use -1 to disable timeout
-        if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
-        QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
-        qDebug() << result;
+        if (QFileInfo(imagepath).exists()) {
+            QImage image(imagepath);
+            image = image.convertToFormat(QImage::Format_RGB32);
+
+            if (osName() == "windows" || osName() == "wince") {
+
+                QFile file(tmpfilename);
+                QString hocr = "";
+                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    return "";
+                QTextStream in(&file);
+                while (!in.atEnd()) {
+                    hocr += in.readLine();
+                }
+                file.close();
+
+                QTextDocument td;
+                td.setHtml(hocr);
+                QRectF newRect(0,0,pdfWriter.width(),pdfWriter.height());
+                painter.drawText(newRect,td.toPlainText());
+                td.setTextWidth(newRect.width());
+                td.drawContents(&painter, newRect);
+                painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(image));
+
+            } else {
+
+                QFile file(pdffile + ".hocr");
+                QString hocr = "";
+                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    return "";
+                QTextStream in(&file);
+                while (!in.atEnd()) {
+                    hocr += in.readLine();
+                }
+                file.close();
+
+                int textpos = hocr.indexOf("bbox 0 0 ")+9;
+                double totalw = hocr.mid(textpos,hocr.indexOf(" ",textpos)-textpos).toDouble();
+                textpos = hocr.indexOf(" ",textpos)+1;
+                double totalh = hocr.mid(textpos,hocr.indexOf("'",textpos)-textpos).toDouble();
+
+                double ratiow = pdfWriter.width()/totalw;
+                double ratioh = pdfWriter.height()/totalh;
+
+                hocr = hocr.mid(hocr.indexOf("<span"));
+                hocr = hocr.replace("<b>","");
+                hocr = hocr.replace("</b>","");
+
+                while (hocr.indexOf("bbox ")>0) {
+                    int textpos = hocr.indexOf("bbox ")+5;
+                    double tx = hocr.mid(textpos,hocr.indexOf(" ",textpos)-textpos).toDouble();
+                    textpos = hocr.indexOf(" ",textpos)+1;
+                    double ty = hocr.mid(textpos,hocr.indexOf(" ",textpos)-textpos).toDouble();
+                    textpos = hocr.indexOf(" ",textpos)+1;
+                    double tw = hocr.mid(textpos,hocr.indexOf(" ",textpos)-textpos).toDouble()-tx;
+                    textpos = hocr.indexOf(" ",textpos)+1;
+                    double th = hocr.mid(textpos,hocr.indexOf('"',textpos)-textpos).toDouble()-ty;
+                    textpos = hocr.indexOf('>',textpos)+1;
+                    QString curtext = hocr.mid(textpos,hocr.indexOf('<',textpos)-textpos);
+                    textpos = hocr.indexOf('<',textpos)+1;
+                    hocr = hocr.mid(textpos);
+                    QRectF newRect(tx*ratiow,ty*ratioh,tw*ratiow,th*ratioh);
+                    painter.drawText(newRect, curtext);
+                }
+                painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(image));
+            }
+
+        }
 
         text += pdffile + ".pdf";
         tempfiles << pdffile + ".pdf";
@@ -488,7 +530,10 @@ void kocrMainWindow::on_pushButton_2_clicked()
         }
         tfile.close();
 
-         QPdfWriter pdfWriter(tmpfilename);
+        //QFile fpdf(tmpfilename);
+         //fpdf.open(QIODevice::WriteOnly);
+         //QPdfWriter pdfWriter(&fpdf);
+        QPdfWriter pdfWriter(tmpfilename);
          QPainter painter(&pdfWriter);
 
         for (int i = 0; i<allpages.split("|").count(); i++) {
@@ -521,6 +566,7 @@ void kocrMainWindow::on_pushButton_2_clicked()
              }
          }
 
+        //fpdf.close();
         tempfiles << tmpfilename;
 
         QString finalpdf = "";

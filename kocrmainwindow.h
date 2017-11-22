@@ -28,7 +28,7 @@
 #include <QDesktopServices>
 #include <QDebug>
 #if defined(Q_OS_WIN)
-    #include <poppler-qt5.h>
+    #include <poppler-qt5.h>              //from https://sourceforge.net/projects/poppler-win32/
 #elif defined(Q_OS_LINUX)
     #include <poppler/qt5/poppler-qt5.h>  //from libpoppler-qt5-dev or https://sourceforge.net/projects/poppler-win32/
 #elif defined(Q_OS_UNIX)
@@ -100,7 +100,7 @@ private:
     void addimagetolist(QString file);
     void addpdftolist(QString pdfin);
     void displayimage(QListWidgetItem *item, int zoom = 0);
-    QString hocr2pdf;
+    //QString hocr2pdf;
     QStringList tempfiles;
     QString tesseract;
     QString cuneiform;
