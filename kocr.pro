@@ -21,7 +21,13 @@ HEADERS  += kocrmainwindow.h
 
 FORMS    += kocrmainwindow.ui
 
+win32 {
+   INCLUDEPATH += $$PWD/include/poppler-qt5
+   LIBS += -L$$PWD/lib
+}
+
 LIBS     += -lpoppler-qt5
+
 
 unix {
    target.path = /usr/bin

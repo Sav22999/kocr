@@ -27,7 +27,13 @@
 #include <QTransform>
 #include <QDesktopServices>
 #include <QDebug>
-#include <poppler/qt5/poppler-qt5.h>  //from libpoppler-qt5-dev or https://sourceforge.net/projects/poppler-win32/
+#if defined(Q_OS_WIN)
+    #include <poppler-qt5.h>
+#elif defined(Q_OS_LINUX)
+    #include <poppler/qt5/poppler-qt5.h>  //from libpoppler-qt5-dev or https://sourceforge.net/projects/poppler-win32/
+#elif defined(Q_OS_UNIX)
+    #include <poppler/qt5/poppler-qt5.h>
+#endif
 #include <QPdfWriter>
 
 namespace Ui {
