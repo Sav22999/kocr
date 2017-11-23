@@ -8,8 +8,7 @@ Kocr works with Qt 5.6 graphical libraries.
 
 Kocr uses the following programs:
 * Tesseract (https://github.com/tesseract-ocr/tesseract) or Cuneiform (https://answers.launchpad.net/cuneiform-linux/+question/266152)
-* Ghostscript (https://www.ghostscript.com/download/gsdnld.html)
-* hocr2pdf (https://exactcode.com/opensource/exactimage/)
+* LibPoppler (https://packages.debian.org/sid/libpoppler-qt5-dev or https://sourceforge.net/projects/poppler-win32/)
 
 Please, check the releases section for binary packages if you want to try it. On GNU/Linux, dependencies must be installed using your system's packaging tools (E.G.: On Debian it's apt-get). On Windows, they must be placed on C:\Programs or in subfolders of kocr directory (as they are in the release zip file).
 
@@ -27,5 +26,8 @@ Please, take note that the OCR process may take several minutes. The program may
 
 # Credits
 
-Kocr has been created by Luca Tringali and is relased under GNU GPL3. Kocr is free software, you are free to fork it and apply as many changes as you like. If you want to contribute to this code, please keep in mind that I'm looking for something that works on both GNU/Linux and Windows and it's as simple as it could possibly be. This program should do one thing, and do it good.
-If you use Tesseract, Cuneiform, and Ghostscript you accept their license. Special thanks goes to the people that wrote those tools for handling images, pdf, and performing OCR.
+Kocr has been created by Luca Tringali and is relased under GNU GPL3. 
+
+Kocr is free software, you are free to fork it and apply as many changes as you like. If you want to contribute to this code, please keep in mind that I'm looking for something that works on both GNU/Linux and Windows and it's as simple as it could possibly be. This program should do one thing, and do it good.
+
+If you use Tesseract, Cuneiform, and Poppler you accept their license. Special thanks goes to the people that wrote those tools for handling images, pdf, and performing OCR.
