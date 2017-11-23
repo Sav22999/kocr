@@ -259,18 +259,20 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
     if (pdffile != "") {
         pdfdir = QFileInfo(pdffile).absoluteDir().absolutePath();
         if (osName() == "windows" || osName() == "wince") {
-            arguments << "-FileFormat=\"HtmlAnsi\"";
+            arguments << "-FileFormat=RtfAnsi";
+            tmpfilename = pdffile + ".rtf";
         } else {
             arguments << "-f";
             arguments << "hocr";
         }
         if (osName() == "windows" || osName() == "wince") {
-            arguments << "-RecognizeToFileName=\"" + pdffile + ".hocr" + "\"";
+            arguments << "-RecognizeToFileName=" + tmpfilename;
+            tempfiles << tmpfilename;
         } else {
             arguments << "-o";
             arguments << pdffile + ".hocr";
+            tempfiles << pdffile + ".hocr";
         }
-        tempfiles << pdffile + ".hocr";
     } else {
         QTemporaryFile tfile;
         if (tfile.open()) {
@@ -331,14 +333,14 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         QString command = QFileInfo(cuneiform).absolutePath() + "/rtf2html.exe";
         QStringList arguments;
         arguments << tmpfilename;
-        arguments << tmpfilename.right(4) + ".hocr";
+        arguments << tmpfilename.mid(0,tmpfilename.length()-4) + ".hocr";
         QProcess myProcess;
         myProcess.start(command, arguments);
         int timeout = -1;//300000; //just use -1 to disable timeout
         if (!myProcess.waitForFinished(timeout))
                 qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
-        tmpfilename = tmpfilename.right(4) + ".hocr";
+        tmpfilename = tmpfilename.mid(0,tmpfilename.length()-4) + ".hocr";
     }
 
     QString text = "";
@@ -376,10 +378,22 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
 
                 QTextDocument td;
                 td.setHtml(hocr);
-                QRectF newRect(0,0,pdfWriter.width(),pdfWriter.height());
-                painter.drawText(newRect,td.toPlainText());
-                td.setTextWidth(newRect.width());
-                td.drawContents(&painter, newRect);
+                //QRectF newRect(0,0,pdfWriter.width(),pdfWriter.height());
+                //painter.drawText(newRect,td.toPlainText());
+                td.setTextWidth(pdfWriter.width());
+                QFont tfont = td.defaultFont();
+                double nsize =(td.defaultFont().pointSizeF()*(pdfWriter.width()/(pdfWriter.logicalDpiX()/3)));
+                /*int pixelsWide = 0;
+                while (pixelsWide < (pdfWriter.height()/pdfWriter.logicalDpiY())) {
+                    tfont.setPixelSize(nsize);
+                    QFontMetrics fm(tfont);
+                    pixelsWide = fm.boundingRect(td.toPlainText()).height();
+                    nsize = nsize+10;
+                }*/
+                tfont.setPointSizeF(nsize);
+                td.setDefaultFont(tfont);
+                //td.drawContents(&painter, newRect);
+                td.drawContents(&painter);
                 painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(image));
 
             } else {

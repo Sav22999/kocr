@@ -27,6 +27,7 @@
 #include <QTransform>
 #include <QDesktopServices>
 #include <QDebug>
+#include <QFontMetrics>
 #if defined(Q_OS_WIN)
     #include <poppler-qt5.h>              //from https://sourceforge.net/projects/poppler-win32/
 #elif defined(Q_OS_LINUX)
