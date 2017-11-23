@@ -130,7 +130,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
         myProcess.start(command, arguments);
         int timeout = -1;//300000; //just use -1 to disable timeout
         if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
+            qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
         result = result.replace("\r\n","\n");
         for (int i = 0; i<result.split("\n").count(); i++) {
@@ -153,7 +153,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             myProcess.start(command, arguments);
             int timeout = -1;//300000; //just use -1 to disable timeout
             if (!myProcess.waitForFinished(timeout))
-                    qDebug() << "Error running subprocess";
+                qDebug() << "Error running subprocess";
             QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
             qDebug() << result;
             result = "Bulgarian, Croatian, Czech, Danish, Digits, Dutch, English, Estonian, French, German, Hungarian, Italian, Lettish, Lithuanian, Polish, Portuguese, Romanian, Russian, RussianEnglish, Serbian, Slovenian, Spanish, Swedish, Ukrainian";
@@ -172,7 +172,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             myProcess.start(command, arguments);
             int timeout = -1;//300000; //just use -1 to disable timeout
             if (!myProcess.waitForFinished(timeout))
-                    qDebug() << "Error running subprocess";
+                qDebug() << "Error running subprocess";
             QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
             result = result.mid(result.indexOf(":"));
             result = result.replace(".\n","");
@@ -183,7 +183,7 @@ void kocrMainWindow::on_ocrengine_currentIndexChanged(const QString &arg1)
             }
             ui->language->setCurrentText("eng");
         }
-        }
+    }
 }
 
 QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString language, bool html, QString pdffile)
@@ -220,7 +220,7 @@ QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString
     myProcess.start(command, arguments);
     int timeout = 300000; //just use -1 to disable timeout
     if (!myProcess.waitForFinished(timeout))
-            qDebug() << "Error running subprocess";
+        qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
     qDebug() << result;
 
@@ -325,7 +325,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
     myProcess.start(command, arguments);
     int timeout = 300000; //just use -1 to disable timeout
     if (!myProcess.waitForFinished(timeout))
-            qDebug() << "Error running subprocess";
+        qDebug() << "Error running subprocess";
     QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
     qDebug() << result;
 
@@ -338,7 +338,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
         myProcess.start(command, arguments);
         int timeout = -1;//300000; //just use -1 to disable timeout
         if (!myProcess.waitForFinished(timeout))
-                qDebug() << "Error running subprocess";
+            qDebug() << "Error running subprocess";
         QString result = QString(myProcess.readAllStandardOutput()) + QString(myProcess.readAllStandardError());
         tmpfilename = tmpfilename.mid(0,tmpfilename.length()-4) + ".hocr";
     }
@@ -545,21 +545,21 @@ void kocrMainWindow::on_pushButton_2_clicked()
         tfile.close();
 
         //QFile fpdf(tmpfilename);
-         //fpdf.open(QIODevice::WriteOnly);
-         //QPdfWriter pdfWriter(&fpdf);
+        //fpdf.open(QIODevice::WriteOnly);
+        //QPdfWriter pdfWriter(&fpdf);
         QPdfWriter pdfWriter(tmpfilename);
-         QPainter painter(&pdfWriter);
+        QPainter painter(&pdfWriter);
 
         for (int i = 0; i<allpages.split("|").count(); i++) {
-             QString inp = "";
-             inp = allpages.split("|").at(i);
-             if (QFileInfo(inp).exists()) {
+            QString inp = "";
+            inp = allpages.split("|").at(i);
+            if (QFileInfo(inp).exists()) {
 
-                 if (i>0) pdfWriter.newPage();
-                 Poppler::Document* document = Poppler::Document::load(inp);
-                 //document->setRenderBackend(Poppler::Document::RenderBackend::ArthurBackend); //you only need this if you want to use pdfPage->renderToPainter(&painter);
-                 if (!document || document->isLocked()) return;
-                 for (int t = 0; t<document->numPages(); t++) {
+                if (i>0) pdfWriter.newPage();
+                Poppler::Document* document = Poppler::Document::load(inp);
+                //document->setRenderBackend(Poppler::Document::RenderBackend::ArthurBackend); //you only need this if you want to use pdfPage->renderToPainter(&painter);
+                if (!document || document->isLocked()) return;
+                for (int t = 0; t<document->numPages(); t++) {
                     Poppler::Page* pdfPage = document->page(t);  // Document starts at page 0
                     if (pdfPage == 0) break;
                     //pdfPage->renderToPainter(&painter,dpi.toInt(),dpi.toInt());
@@ -575,10 +575,10 @@ void kocrMainWindow::on_pushButton_2_clicked()
                     //QTextDocument td;
                     //td.setHtml(hocr);
                     //td.drawContents(&painter);
-                 }
-                 delete document;
-             }
-         }
+                }
+                delete document;
+            }
+        }
 
         //fpdf.close();
         tempfiles << tmpfilename;

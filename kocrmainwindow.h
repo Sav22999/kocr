@@ -101,7 +101,6 @@ private:
     void addimagetolist(QString file);
     void addpdftolist(QString pdfin);
     void displayimage(QListWidgetItem *item, int zoom = 0);
-    //QString hocr2pdf;
     QStringList tempfiles;
     QString tesseract;
     QString cuneiform;
