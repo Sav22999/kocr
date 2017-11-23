@@ -27,7 +27,8 @@
 #include <QTransform>
 #include <QDesktopServices>
 #include <QDebug>
-#include <QFontMetrics>
+//#include <QFontMetrics>
+#include <QPdfWriter>
 #if defined(Q_OS_WIN)
     #include <poppler-qt5.h>              //from https://sourceforge.net/projects/poppler-win32/
 #elif defined(Q_OS_LINUX)
@@ -35,7 +36,6 @@
 #elif defined(Q_OS_UNIX)
     #include <poppler/qt5/poppler-qt5.h>
 #endif
-#include <QPdfWriter>
 
 namespace Ui {
 class kocrMainWindow;
