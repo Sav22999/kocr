@@ -239,7 +239,7 @@ QString kocrMainWindow::tesseractocr(QString imagepath, QString command, QString
             text += in.readLine();
         }
         file.close();
-        QFile::remove(tmpfilename);
+        tempfiles << tmpfilename;
     } else {
         text += pdffile + ".pdf";
         tempfiles << pdffile + ".pdf";
@@ -353,7 +353,7 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
             text += in.readLine();
         }
         file.close();
-        //QFile::remove(tmpfilename);
+        tempfiles << tmpfilename;
     } else {
         // hocr2pdf -i scan.tiff -o test.pdf < cuneiform-out.hocr
 
@@ -392,7 +392,6 @@ QString kocrMainWindow::cuneiformocr(QString imagepath, QString command, QString
                 }*/
                 tfont.setPointSizeF(nsize);
                 td.setDefaultFont(tfont);
-                //td.drawContents(&painter, newRect);
                 td.drawContents(&painter);
                 painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(image));
 
@@ -544,9 +543,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
         }
         tfile.close();
 
-        //QFile fpdf(tmpfilename);
-        //fpdf.open(QIODevice::WriteOnly);
-        //QPdfWriter pdfWriter(&fpdf);
         QPdfWriter pdfWriter(tmpfilename);
         QPainter painter(&pdfWriter);
 
@@ -572,9 +568,6 @@ void kocrMainWindow::on_pushButton_2_clicked()
                         painter.drawText(newRect, tb.at(n)->text());
                     }
                     painter.drawPixmap(0,0, pdfWriter.width(), pdfWriter.height(), QPixmap::fromImage(pdfPage->renderToImage(dpi.toInt(),dpi.toInt())));
-                    //QTextDocument td;
-                    //td.setHtml(hocr);
-                    //td.drawContents(&painter);
                 }
                 delete document;
             }
@@ -666,20 +659,10 @@ void kocrMainWindow::addpdftolist(QString pdfin)
         tmpimage.save(tmpfilename);
         qDebug() << tmpfilename;
         delete pdfPage;
+        addimagetolist(tmpfilename);
+        tempfiles << tmpfilename;
     }
     delete document;
-
-    //now we open images
-    QDir pdir(tmpdir);
-    pdir.setFilter(QDir::Files | QDir::NoSymLinks);
-    pdir.setSorting(QDir::Name);
-    QFileInfoList list = pdir.entryInfoList();
-    for (int i = 0; i < list.size(); ++i) {
-        QFileInfo fileInfo = list.at(i);
-        tempfiles << fileInfo.absoluteFilePath();
-        addimagetolist(fileInfo.absoluteFilePath());
-    }
-
 }
 
 void kocrMainWindow::on_actionAbout_Kocr_triggered()
